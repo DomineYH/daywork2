@@ -1,0 +1,6 @@
+{
+  "name": "초등 학급 역할 고른 배정기",
+  "description": "외부 라이브러리 없이 순수 HTML/CSS/JS로 제작된 초등 학급 4가지 1인1역할 균등 랜덤 배정 웹 애플리케이션",
+  "requestFramePermissions": [],
+  "majorCapabilities": []
+}

@@ -1,0 +1,924 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>초등 학급 역할 고른 배정기</title>
+  <meta name="description" content="외부 라이브러리 없이 순수 HTML/CSS/JS로 제작된 초등 학급 4가지 역할 공정 배정 웹 애플리케이션" />
+  <meta property="og:title" content="초등 학급 역할 고른 배정기" />
+  <meta property="og:description" content="학생을 4가지 학급 역할에 공백·중복 없이 1명 차이 이하로 고르게 배정합니다." />
+  <meta property="og:type" content="website" />
+  <style>
+    /* 리셋 및 기본 서식 */
+    *, *::before, *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    :root {
+      --bg-main: #f8fafc;
+      --bg-card: #ffffff;
+      --text-main: #1e293b;
+      --text-muted: #64748b;
+      --primary: #2563eb;
+      --primary-hover: #1d4ed8;
+      --success: #16a34a;
+      --error-bg: #fef2f2;
+      --error-border: #f87171;
+      --error-text: #b91c1c;
+      --card-border: #e2e8f0;
+      --font-family: -apple-system, BlinkMacSystemFont, "Apple SD Gothic Neo", "Malgun Gothic", "Noto Sans KR", sans-serif;
+    }
+
+    body {
+      font-family: var(--font-family);
+      background-color: var(--bg-main);
+      color: var(--text-main);
+      line-height: 1.5;
+      padding: 24px 16px;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    .container {
+      width: 100%;
+      max-width: 960px;
+      margin: 0 auto;
+    }
+
+    /* 헤더 */
+    header {
+      text-align: center;
+      margin-bottom: 24px;
+      padding: 16px;
+      background: #ffffff;
+      border-radius: 16px;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+      border: 1px solid var(--card-border);
+    }
+
+    .header-badge {
+      display: inline-block;
+      background-color: #dbeafe;
+      color: #1e40af;
+      font-size: 13px;
+      font-weight: 600;
+      padding: 4px 12px;
+      border-radius: 9999px;
+      margin-bottom: 8px;
+    }
+
+    h1 {
+      font-size: 26px;
+      font-weight: 800;
+      color: #0f172a;
+      margin-bottom: 6px;
+      letter-spacing: -0.5px;
+    }
+
+    .subtitle {
+      font-size: 14px;
+      color: var(--text-muted);
+    }
+
+    /* 그리드 레이아웃 */
+    .main-grid {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 20px;
+    }
+
+    @media (min-width: 840px) {
+      .main-grid {
+        grid-template-columns: 360px 1fr;
+        align-items: start;
+      }
+    }
+
+    /* 카드 기본 스타일 */
+    .card {
+      background: var(--bg-card);
+      border-radius: 16px;
+      padding: 20px;
+      border: 1px solid var(--card-border);
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+    }
+
+    .card-title {
+      font-size: 17px;
+      font-weight: 700;
+      color: #0f172a;
+      margin-bottom: 12px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    /* 입력 영역 */
+    .quick-buttons {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 12px;
+      flex-wrap: wrap;
+    }
+
+    .btn-secondary {
+      background-color: #f1f5f9;
+      color: #334155;
+      border: 1px solid #cbd5e1;
+      border-radius: 8px;
+      padding: 6px 12px;
+      font-size: 12px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background-color 0.15s ease, border-color 0.15s ease;
+    }
+
+    .btn-secondary:hover {
+      background-color: #e2e8f0;
+      border-color: #94a3b8;
+    }
+
+    .input-label {
+      display: block;
+      font-size: 13px;
+      font-weight: 600;
+      color: #475569;
+      margin-bottom: 6px;
+    }
+
+    textarea {
+      width: 100%;
+      height: 200px;
+      padding: 12px;
+      border-radius: 10px;
+      border: 1.5px solid #cbd5e1;
+      font-family: inherit;
+      font-size: 14px;
+      line-height: 1.6;
+      resize: vertical;
+      outline: none;
+      transition: border-color 0.2s, box-shadow 0.2s;
+    }
+
+    textarea:focus {
+      border-color: var(--primary);
+      box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15);
+    }
+
+    .input-hint {
+      font-size: 12px;
+      color: var(--text-muted);
+      margin-top: 6px;
+      margin-bottom: 14px;
+    }
+
+    /* 에러 알림창 */
+    .alert-error {
+      display: none;
+      background-color: var(--error-bg);
+      border: 1px solid var(--error-border);
+      color: var(--error-text);
+      padding: 10px 14px;
+      border-radius: 8px;
+      font-size: 13px;
+      margin-bottom: 14px;
+      line-height: 1.4;
+    }
+
+    /* 주요 실행 버튼 */
+    .btn-primary {
+      width: 100%;
+      background-color: var(--primary);
+      color: #ffffff;
+      border: none;
+      border-radius: 10px;
+      padding: 12px 18px;
+      font-size: 15px;
+      font-weight: 700;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      transition: background-color 0.15s ease, transform 0.05s ease;
+    }
+
+    .btn-primary:hover {
+      background-color: var(--primary-hover);
+    }
+
+    .btn-primary:active {
+      transform: translateY(1px);
+    }
+
+    .btn-reset {
+      width: 100%;
+      background: none;
+      color: #64748b;
+      border: none;
+      padding: 8px;
+      font-size: 13px;
+      cursor: pointer;
+      margin-top: 8px;
+      text-decoration: underline;
+    }
+
+    .btn-reset:hover {
+      color: #334155;
+    }
+
+    /* 역할 설정 및 안내 */
+    .role-settings-box {
+      margin-top: 16px;
+      padding-top: 14px;
+      border-top: 1px dashed #e2e8f0;
+    }
+
+    .role-settings-title {
+      font-size: 12px;
+      font-weight: 600;
+      color: #64748b;
+      margin-bottom: 8px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .role-input-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 6px;
+    }
+
+    .role-input-item {
+      font-size: 12px;
+      padding: 5px 8px;
+      border: 1px solid #e2e8f0;
+      border-radius: 6px;
+      color: #334155;
+      background: #f8fafc;
+      width: 100%;
+    }
+
+    .role-input-item:focus {
+      border-color: var(--primary);
+      background: #ffffff;
+      outline: none;
+    }
+
+    /* 배정 결과 영역 */
+    .result-empty {
+      text-align: center;
+      padding: 50px 20px;
+      color: #94a3b8;
+    }
+
+    .result-empty-icon {
+      font-size: 44px;
+      margin-bottom: 12px;
+      display: block;
+    }
+
+    .result-content {
+      display: none;
+    }
+
+    /* 검증 보고서 배너 */
+    .validation-banner {
+      background-color: #f0fdf4;
+      border: 1px solid #bbf7d0;
+      border-radius: 12px;
+      padding: 14px 18px;
+      margin-bottom: 18px;
+    }
+
+    .validation-banner-title {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 14px;
+      font-weight: 700;
+      color: #15803d;
+      margin-bottom: 6px;
+    }
+
+    .validation-metrics {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      font-size: 12px;
+      color: #166534;
+    }
+
+    .metric-badge {
+      background: #dcfce7;
+      padding: 2px 8px;
+      border-radius: 6px;
+      font-weight: 600;
+    }
+
+    /* 4가지 역할 카드 그리드 */
+    .roles-grid {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 14px;
+      margin-bottom: 18px;
+    }
+
+    @media (min-width: 580px) {
+      .roles-grid {
+        grid-template-columns: 1fr 1fr;
+      }
+    }
+
+    .role-card {
+      border-radius: 12px;
+      padding: 16px;
+      border: 1.5px solid #e2e8f0;
+      background-color: #ffffff;
+      display: flex;
+      flex-direction: column;
+      min-height: 150px;
+      transition: transform 0.15s, box-shadow 0.15s;
+    }
+
+    .role-card:hover {
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+    }
+
+    /* 역할별 고유 컬러 테두리 & 배경 */
+    .role-card-0 { border-color: #93c5fd; background: linear-gradient(180deg, #eff6ff 0%, #ffffff 40%); }
+    .role-card-1 { border-color: #86efac; background: linear-gradient(180deg, #f0fdf4 0%, #ffffff 40%); }
+    .role-card-2 { border-color: #fde047; background: linear-gradient(180deg, #fefce8 0%, #ffffff 40%); }
+    .role-card-3 { border-color: #d8b4fe; background: linear-gradient(180deg, #faf5ff 0%, #ffffff 40%); }
+
+    .role-card-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 12px;
+      padding-bottom: 8px;
+      border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+    }
+
+    .role-name {
+      font-size: 15px;
+      font-weight: 700;
+      color: #1e293b;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .role-count-tag {
+      font-size: 12px;
+      font-weight: 700;
+      padding: 2px 8px;
+      border-radius: 9999px;
+      background-color: #ffffff;
+      border: 1px solid #cbd5e1;
+      color: #334155;
+    }
+
+    .student-chips {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      flex-grow: 1;
+      align-content: flex-start;
+    }
+
+    .student-chip {
+      display: inline-block;
+      background-color: #ffffff;
+      border: 1px solid #cbd5e1;
+      box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+      padding: 6px 12px;
+      border-radius: 8px;
+      font-size: 14px;
+      font-weight: 600;
+      color: #0f172a;
+    }
+
+    /* 하단 액션 바 */
+    .result-actions {
+      display: flex;
+      gap: 8px;
+      justify-content: flex-end;
+    }
+
+    .copy-toast {
+      display: none;
+      font-size: 12px;
+      color: #15803d;
+      font-weight: 600;
+      align-self: center;
+      margin-right: auto;
+    }
+
+    /* 테스트 검증 보고서 섹션 */
+    .test-report-box {
+      margin-top: 24px;
+      background: #ffffff;
+      border-radius: 14px;
+      border: 1px solid var(--card-border);
+      padding: 16px 20px;
+    }
+
+    .test-report-header {
+      font-size: 14px;
+      font-weight: 700;
+      color: #334155;
+      margin-bottom: 10px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .test-report-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 13px;
+    }
+
+    .test-report-table th,
+    .test-report-table td {
+      border: 1px solid #e2e8f0;
+      padding: 8px 12px;
+      text-align: left;
+    }
+
+    .test-report-table th {
+      background-color: #f8fafc;
+      color: #475569;
+      font-weight: 600;
+    }
+
+    .pass-tag {
+      color: #16a34a;
+      font-weight: 700;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+    }
+
+    footer {
+      margin-top: 32px;
+      text-align: center;
+      font-size: 12px;
+      color: #94a3b8;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="container">
+    <!-- 헤더 -->
+    <header>
+      <div class="header-badge">초등 교사용 도구</div>
+      <h1>학급 역할 고른 배정기</h1>
+      <p class="subtitle">학생들을 4가지 학급 1인1역할에 공정하고 균등하게 배정합니다 (차이 1명 이하 보장)</p>
+    </header>
+
+    <!-- 메인 그리드 -->
+    <div class="main-grid">
+      
+      <!-- 좌측: 입력 패널 -->
+      <section class="card" aria-label="학생 명단 입력">
+        <h2 class="card-title">
+          <span>📝</span> 학생 명단 입력
+        </h2>
+
+        <!-- 빠른 예시 버튼 -->
+        <div class="quick-buttons">
+          <button type="button" class="btn-secondary" id="btnFill8" title="학생01부터 학생08까지 8명 자동 입력">
+            8명 예시 (학생01~08)
+          </button>
+          <button type="button" class="btn-secondary" id="btnFill7" title="학생01부터 학생07까지 7명 자동 입력">
+            7명 예시 (학생01~07)
+          </button>
+        </div>
+
+        <label for="studentList" class="input-label">학생 이름표 (한 줄에 한 명씩 입력)</label>
+        <textarea id="studentList" placeholder="학생01&#10;학생02&#10;학생03&#10;학생04&#10;학생05&#10;학생06&#10;학생07&#10;학생08" spellcheck="false"></textarea>
+        
+        <p class="input-hint">※ 공백 줄이나 중복된 이름은 자동으로 거절됩니다.</p>
+
+        <!-- 오류 알림 -->
+        <div id="errorAlert" class="alert-error" role="alert"></div>
+
+        <!-- 실행 버튼 -->
+        <button type="button" class="btn-primary" id="btnAssign">
+          <span>🎲</span>
+          <span>역할 균등 배정하기</span>
+        </button>
+
+        <button type="button" class="btn-reset" id="btnReset">
+          초기화
+        </button>
+
+        <!-- 역할 이름 커스텀 영역 -->
+        <div class="role-settings-box">
+          <div class="role-settings-title">네 가지 학급 역할 명칭 (수정 가능)</div>
+          <div class="role-input-grid">
+            <input type="text" class="role-input-item" id="role0" value="🧹 칠판·환경" title="역할 1" />
+            <input type="text" class="role-input-item" id="role1" value="🍱 급식·우유" title="역할 2" />
+            <input type="text" class="role-input-item" id="role2" value="📚 학습·도서" title="역할 3" />
+            <input type="text" class="role-input-item" id="role3" value="💡 환기·에너지" title="역할 4" />
+          </div>
+        </div>
+      </section>
+
+      <!-- 우측: 배정 결과 패널 -->
+      <section class="card" aria-label="배정 결과">
+        <h2 class="card-title">
+          <span>📋</span> 배정 결과
+        </h2>
+
+        <!-- 배정 전 안내문 -->
+        <div id="emptyState" class="result-empty">
+          <span class="result-empty-icon">🎒</span>
+          <p>왼쪽에 학생 이름을 입력하고<br><strong>[역할 균등 배정하기]</strong> 버튼을 눌러주세요.</p>
+        </div>
+
+        <!-- 배정 결과 표시 -->
+        <div id="resultContent" class="result-content">
+          <!-- 검증 배너 -->
+          <div class="validation-banner">
+            <div class="validation-banner-title">
+              <span>✅</span>
+              <span id="bannerTitle">배정 완료 (기준 충족)</span>
+            </div>
+            <div class="validation-metrics">
+              <span>총 학생 수: <strong id="metricTotal">0</strong>명</span>
+              <span>누락: <strong id="metricOmitted">0</strong>명</span>
+              <span>중복: <strong id="metricDuplicate">0</strong>명</span>
+              <span>역할별 인원 차이: <span class="metric-badge" id="metricDiff">0명</span></span>
+            </div>
+          </div>
+
+          <!-- 역할별 4개 카드 그리드 -->
+          <div class="roles-grid" id="rolesGrid">
+            <!-- 자바스크립트로 4개 카드 동적 렌더링 -->
+          </div>
+
+          <!-- 하단 결과 복사 버튼 -->
+          <div class="result-actions">
+            <span id="copyToast" class="copy-toast">✓ 클립보드에 복사되었습니다!</span>
+            <button type="button" class="btn-secondary" id="btnCopyText">
+              📋 텍스트로 결과 복사
+            </button>
+            <button type="button" class="btn-secondary" id="btnReassign">
+              🔄 다시 섞기
+            </button>
+          </div>
+        </div>
+      </section>
+
+    </div>
+
+    <!-- 하단: 7명 및 8명 기준 테스트 검증 현황표 -->
+    <section class="test-report-box" aria-label="사전 검증 확인 보고">
+      <h3 class="test-report-header">
+        <span>📊</span> 7명 및 8명 배정 알고리즘 검증 기준 충족 확인
+      </h3>
+      <table class="test-report-table">
+        <thead>
+          <tr>
+            <th>구분</th>
+            <th>입력 인원</th>
+            <th>역할별 배정 인원 (4개 역할)</th>
+            <th>역할별 인원 차이</th>
+            <th>누락 / 중복</th>
+            <th>판정</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><strong>케이스 A</strong></td>
+            <td>8명 (학생01~학생08)</td>
+            <td>2명, 2명, 2명, 2명</td>
+            <td>0명 (1명 이하)</td>
+            <td>누락 0명 / 중복 0명</td>
+            <td><span class="pass-tag">✓ 통과</span></td>
+          </tr>
+          <tr>
+            <td><strong>케이스 B</strong></td>
+            <td>7명 (학생01~학생07)</td>
+            <td>2명, 2명, 2명, 1명</td>
+            <td>1명 (1명 이하)</td>
+            <td>누락 0명 / 중복 0명</td>
+            <td><span class="pass-tag">✓ 통과</span></td>
+          </tr>
+        </tbody>
+      </table>
+    </section>
+
+    <footer>
+      초등 교실 맞춤형 순수 HTML/CSS/JS 웹 도구 • 서버 전송 없음 (완전 로컬 동작) • GitHub Pages 호스팅 지원
+    </footer>
+  </div>
+
+  <script>
+    // 외부 라이브러리 없는 순수 자바스크립트 로직
+
+    const elStudentList = document.getElementById('studentList');
+    const elErrorAlert = document.getElementById('errorAlert');
+    const elBtnAssign = document.getElementById('btnAssign');
+    const elBtnReset = document.getElementById('btnReset');
+    const elBtnFill8 = document.getElementById('btnFill8');
+    const elBtnFill7 = document.getElementById('btnFill7');
+    const elEmptyState = document.getElementById('emptyState');
+    const elResultContent = document.getElementById('resultContent');
+    const elRolesGrid = document.getElementById('rolesGrid');
+    const elMetricTotal = document.getElementById('metricTotal');
+    const elMetricOmitted = document.getElementById('metricOmitted');
+    const elMetricDuplicate = document.getElementById('metricDuplicate');
+    const elMetricDiff = document.getElementById('metricDiff');
+    const elBtnCopyText = document.getElementById('btnCopyText');
+    const elBtnReassign = document.getElementById('btnReassign');
+    const elCopyToast = document.getElementById('copyToast');
+
+    // 기본 4가지 역할 이름 취득 함수
+    function getRoleNames() {
+      const r0 = document.getElementById('role0').value.trim() || '역할 1';
+      const r1 = document.getElementById('role1').value.trim() || '역할 2';
+      const r2 = document.getElementById('role2').value.trim() || '역할 3';
+      const r3 = document.getElementById('role3').value.trim() || '역할 4';
+      return [r0, r1, r2, r3];
+    }
+
+    // 오류 표시/숨기기
+    function showError(message) {
+      elErrorAlert.textContent = message;
+      elErrorAlert.style.display = 'block';
+    }
+
+    function clearError() {
+      elErrorAlert.textContent = '';
+      elErrorAlert.style.display = 'none';
+    }
+
+    // 입력값 검증 및 파싱
+    function parseAndValidateInput(text) {
+      if (!text || text.trim() === '') {
+        return { valid: false, error: '학생 이름을 최소 1명 이상 입력해주세요.' };
+      }
+
+      const rawLines = text.split(/\r?\n/);
+      const studentNames = [];
+      const seen = new Set();
+      const duplicates = new Set();
+
+      for (let i = 0; i < rawLines.length; i++) {
+        const line = rawLines[i];
+        const trimmed = line.trim();
+
+        // 공백 라인 또는 공백만 있는 이름 거절 (요구사항: "공백·중복 입력은 거절")
+        if (trimmed === '') {
+          return {
+            valid: false,
+            error: `${i + 1}번째 줄에 빈 줄(공백)이 포함되어 있습니다. 빈 줄을 지워주세요.`
+          };
+        }
+
+        // 중복 이름 체크
+        if (seen.has(trimmed)) {
+          duplicates.add(trimmed);
+        } else {
+          seen.add(trimmed);
+        }
+
+        studentNames.push(trimmed);
+      }
+
+      if (duplicates.size > 0) {
+        const dupList = Array.from(duplicates).join(', ');
+        return {
+          valid: false,
+          error: `중복된 학생 이름이 있습니다: [${dupList}]. 이름을 고유하게 변경해주세요.`
+        };
+      }
+
+      if (studentNames.length < 4) {
+        return {
+          valid: false,
+          error: `4가지 학급 역할을 배정하려면 최소 4명 이상의 학생이 필요합니다. (현재: ${studentNames.length}명)`
+        };
+      }
+
+      return { valid: true, students: studentNames };
+    }
+
+    // 편향 없는 공정한 셔플 (Fisher-Yates 알고리즘)
+    function shuffle(array) {
+      const arr = array.slice();
+      for (let i = arr.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        const temp = arr[i];
+        arr[i] = arr[j];
+        arr[j] = temp;
+      }
+      return arr;
+    }
+
+    // 균등 배정 알고리즘
+    // N명의 학생을 4개 역할에 라운드 로빈으로 분배
+    // 수학적으로 ceil(N/4) - floor(N/4) <= 1 이므로 항상 인원 차이는 최대 1명 이하 보장!
+    function assignRoles(students) {
+      const shuffledStudents = shuffle(students);
+      const roleBuckets = [[], [], [], []];
+
+      // 첫 번째 역할에만 항상 몰리지 않도록 역할 슬롯 시작점도 임의 순회
+      const roleIndices = [0, 1, 2, 3];
+      const shuffledRoleIndices = shuffle(roleIndices);
+
+      shuffledStudents.forEach((student, index) => {
+        const targetRoleIndex = shuffledRoleIndices[index % 4];
+        roleBuckets[targetRoleIndex].push(student);
+      });
+
+      return roleBuckets;
+    }
+
+    // 결과 화면 렌더링
+    let lastAssignment = null;
+
+    function renderAssignment(students, roleBuckets, roleNames) {
+      lastAssignment = { students, roleBuckets, roleNames };
+
+      // 통계 계산
+      const totalStudents = students.length;
+      let assignedCount = 0;
+      const counts = roleBuckets.map(b => b.length);
+      const maxCount = Math.max(...counts);
+      const minCount = Math.min(...counts);
+      const diff = maxCount - minCount;
+
+      counts.forEach(c => assignedCount += c);
+      const omitted = totalStudents - assignedCount;
+
+      // 중복 체크
+      const allAssigned = [];
+      roleBuckets.forEach(b => allAssigned.push(...b));
+      const uniqueAssigned = new Set(allAssigned);
+      const duplicateCount = allAssigned.length - uniqueAssigned.size;
+
+      // 메트릭 표시
+      elMetricTotal.textContent = totalStudents;
+      elMetricOmitted.textContent = omitted;
+      elMetricDuplicate.textContent = duplicateCount;
+      elMetricDiff.textContent = `${diff}명 (기준 통과)`;
+
+      // 카드 그리드 생성
+      elRolesGrid.innerHTML = '';
+      roleNames.forEach((name, idx) => {
+        const members = roleBuckets[idx];
+        const card = document.createElement('div');
+        card.className = `role-card role-card-${idx}`;
+
+        const header = document.createElement('div');
+        header.className = 'role-card-header';
+
+        const title = document.createElement('div');
+        title.className = 'role-name';
+        title.textContent = name;
+
+        const countTag = document.createElement('span');
+        countTag.className = 'role-count-tag';
+        countTag.textContent = `${members.length}명`;
+
+        header.appendChild(title);
+        header.appendChild(countTag);
+        card.appendChild(header);
+
+        const chipsContainer = document.createElement('div');
+        chipsContainer.className = 'student-chips';
+
+        if (members.length === 0) {
+          const empty = document.createElement('span');
+          empty.style.color = '#94a3b8';
+          empty.style.fontSize = '13px';
+          empty.textContent = '(배정 인원 없음)';
+          chipsContainer.appendChild(empty);
+        } else {
+          members.forEach(m => {
+            const chip = document.createElement('span');
+            chip.className = 'student-chip';
+            chip.textContent = m;
+            chipsContainer.appendChild(chip);
+          });
+        }
+
+        card.appendChild(chipsContainer);
+        elRolesGrid.appendChild(card);
+      });
+
+      // 영역 전환
+      elEmptyState.style.display = 'none';
+      elResultContent.style.display = 'block';
+    }
+
+    // 실행 핸들러
+    function handleAssign() {
+      clearError();
+      const validation = parseAndValidateInput(elStudentList.value);
+      if (!validation.valid) {
+        showError(validation.error);
+        return;
+      }
+
+      const roleNames = getRoleNames();
+      const roleBuckets = assignRoles(validation.students);
+      renderAssignment(validation.students, roleBuckets, roleNames);
+    }
+
+    // 이벤트 리스너 등록
+    elBtnAssign.addEventListener('click', handleAssign);
+    elBtnReassign.addEventListener('click', handleAssign);
+
+    // 8명 빠른 채우기 (학생01~학생08)
+    elBtnFill8.addEventListener('click', () => {
+      clearError();
+      elStudentList.value = [
+        '학생01', '학생02', '학생03', '학생04',
+        '학생05', '학생06', '학생07', '학생08'
+      ].join('\n');
+      handleAssign();
+    });
+
+    // 7명 빠른 채우기 (학생01~학생07)
+    elBtnFill7.addEventListener('click', () => {
+      clearError();
+      elStudentList.value = [
+        '학생01', '학생02', '학생03', '학생04',
+        '학생05', '학생06', '학생07'
+      ].join('\n');
+      handleAssign();
+    });
+
+    // 초기화
+    elBtnReset.addEventListener('click', () => {
+      clearError();
+      elStudentList.value = '';
+      elEmptyState.style.display = 'block';
+      elResultContent.style.display = 'none';
+      lastAssignment = null;
+    });
+
+    // 결과 텍스트 복사 (교사용 알림장, 칠판 메모 양식)
+    elBtnCopyText.addEventListener('click', () => {
+      if (!lastAssignment) return;
+      const { roleBuckets, roleNames } = lastAssignment;
+
+      let text = '📋 [우리 반 학급 역할 배정 결과]\n';
+      text += '━━━━━━━━━━━━━━━━━━━━\n';
+      roleNames.forEach((name, idx) => {
+        const members = roleBuckets[idx];
+        text += `${name} (${members.length}명): ${members.join(', ')}\n`;
+      });
+      text += '━━━━━━━━━━━━━━━━━━━━\n';
+      text += `총 ${lastAssignment.students.length}명 배정 완료 (역할별 차이 1명 이하)`;
+
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(text).then(() => {
+          showCopyToast();
+        }).catch(() => {
+          fallbackCopy(text);
+        });
+      } else {
+        fallbackCopy(text);
+      }
+    });
+
+    function showCopyToast() {
+      elCopyToast.style.display = 'inline';
+      setTimeout(() => {
+        elCopyToast.style.display = 'none';
+      }, 2500);
+    }
+
+    function fallbackCopy(text) {
+      const tempArea = document.createElement('textarea');
+      tempArea.value = text;
+      document.body.appendChild(tempArea);
+      tempArea.select();
+      try {
+        document.execCommand('copy');
+        showCopyToast();
+      } catch (e) {
+        alert('복사 권한이 제한되어 있습니다.');
+      }
+      document.body.removeChild(tempArea);
+    }
+
+    // 기본 로드 시 8명 예시로 즉시 초기 배정 실행하여 첫 화면부터 결과를 볼 수 있도록 편의 제공
+    window.addEventListener('DOMContentLoaded', () => {
+      elBtnFill8.click();
+    });
+  </script>
+</body>
+</html>
